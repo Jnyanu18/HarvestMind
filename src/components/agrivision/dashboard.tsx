@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { Camera, BarChart3, LineChart, MessageCircle, BarChart as BarChartIcon } from 'lucide-react';
-import type { AppControls, DetectionResult, ForecastResult, ChatMessage } from '@/lib/types';
+import type { AppControls, DetectionResult, ForecastResult, ChatMessage, TomatoAnalysisResult } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,9 +13,11 @@ import { DetectionTab } from '@/components/agrivision/detection-tab';
 import { ForecastTab } from '@/components/agrivision/forecast-tab';
 import { MarketTab } from '@/components/agrivision/market-tab';
 import { ChatTab } from '@/components/agrivision/chat-tab';
-import { mockTomatoDetection, calculateYieldForecast } from '@/lib/mock-data';
+import { calculateYieldForecast } from '@/lib/mock-data';
 import type { MarketPriceForecastingOutput } from '@/ai/flows/market-price-forecasting';
 import { useToast } from '@/hooks/use-toast';
+import { runTomatoAnalysis } from '@/app/actions';
+import { dataURLtoFile } from '@/lib/utils';
 
 export function Dashboard() {
   const { isMobile } = useSidebar();
@@ -64,25 +66,45 @@ export function Dashboard() {
     setDetectionResult(null);
     setForecastResult(null);
 
-    // Reverted to always use mock data for stability
-    setTimeout(() => {
-        try {
-            const detection = mockTomatoDetection(image.url!);
-            setDetectionResult(detection);
-            
-            if (detection) {
-                const forecast = calculateYieldForecast(detection, controls);
-                setForecastResult(forecast);
-                // Switch to forecast tab after successful analysis
-                setActiveTab('forecast');
-            }
-        } catch (error) {
-            console.error("Analysis failed:", error);
-            toast({ variant: 'destructive', title: 'Analysis Failed', description: 'An unexpected error occurred with mock data.' });
-        } finally {
-            setIsLoading(false);
-        }
-    }, 1000); // Simulate network latency
+    try {
+      const response = await runTomatoAnalysis({ photoDataUri: image.url });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || "Analysis failed.");
+      }
+
+      const analysis: TomatoAnalysisResult = response.data;
+      
+      const newDetectionResult: DetectionResult = {
+        plantId: Date.now(),
+        detections: analysis.counts.immature + analysis.counts.ripening + analysis.counts.mature,
+        // The new model doesn't provide boxes, so we pass an empty array.
+        // We can ask the model for boxes in a future iteration if needed.
+        boxes: [], 
+        stageCounts: analysis.counts,
+        // Determine overall stage based on counts
+        growthStage: analysis.counts.mature > analysis.counts.immature ? 'Mature' : 'Ripening',
+        // Confidence and bbox area aren't provided by this model
+        avgBboxArea: 0,
+        confidence: 0.9, // Default confidence
+        imageUrl: image.url,
+        summary: analysis.summary
+      };
+
+      setDetectionResult(newDetectionResult);
+      
+      if (newDetectionResult) {
+          const forecast = calculateYieldForecast(newDetectionResult, controls);
+          setForecastResult(forecast);
+          setActiveTab('forecast');
+      }
+
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      toast({ variant: 'destructive', title: 'Analysis Failed', description: error instanceof Error ? error.message : 'An unexpected error occurred.' });
+    } finally {
+      setIsLoading(false);
+    }
   }, [image.url, controls, toast]);
   
   React.useEffect(() => {

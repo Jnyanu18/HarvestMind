@@ -1,6 +1,7 @@
+
 import { z } from 'zod';
 
-export type Stage = 'immature' | 'ripening' | 'mature';
+export type Stage = 'immature' | 'ripening' | 'mature' | 'flower';
 
 export interface AppControls {
   avgWeightG: number;
@@ -20,8 +21,6 @@ export interface DetectionBox {
   stage: Stage;
 }
 
-// This is the primary type for what the UI components will use.
-// It's derived from the AI model's output but contains additional calculated fields.
 export interface DetectionResult {
   plantId: number;
   detections: number;
@@ -31,6 +30,7 @@ export interface DetectionResult {
   avgBboxArea: number;
   confidence: number;
   imageUrl: string;
+  summary?: string;
 }
 
 export interface DailyForecast {
@@ -61,25 +61,22 @@ export interface ChatMessage {
 
 // == AI Flow Schemas ==
 
-// Input for the AI detection flow
-export const TomatoDetectionInputSchema = z.object({
+export const AnalyzeTomatoInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
       "A photo of a plant, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
-export type TomatoDetectionInput = z.infer<typeof TomatoDetectionInputSchema>;
+export type AnalyzeTomatoInput = z.infer<typeof AnalyzeTomatoInputSchema>;
 
-
-// The direct output from the AI detection model.
-const DetectionBoxSchema = z.object({
-  box: z.tuple([z.number(), z.number(), z.number(), z.number()]).describe("Bounding box coordinates [x1, y1, x2, y2] as percentages."),
-  stage: z.enum(['immature', 'ripening', 'mature']).describe("Ripeness stage of the tomato."),
+export const TomatoAnalysisResultSchema = z.object({
+  summary: z.string().describe("A short summary of the detection results."),
+  counts: z.object({
+    flower: z.number().describe("Count of visible flowers."),
+    immature: z.number().describe("Count of immature (green) tomatoes."),
+    ripening: z.number().describe("Count of ripening (orange/yellow) tomatoes."),
+    mature: z.number().describe("Count of mature (red) tomatoes."),
+  }).describe("The counts of tomatoes and flowers classified by growth stage."),
 });
-
-export const TomatoDetectionOutputSchema = z.object({
-  boxes: z.array(DetectionBoxSchema).describe('An array of detected tomato boxes with their stages.'),
-  confidence: z.number().optional().describe('The model\'s confidence score for the overall detection (from 0 to 1).'),
-});
-export type TomatoDetectionOutput = z.infer<typeof TomatoDetectionOutputSchema>;
+export type TomatoAnalysisResult = z.infer<typeof TomatoAnalysisResultSchema>;

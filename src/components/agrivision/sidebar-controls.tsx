@@ -117,13 +117,14 @@ isLoading,
                     className="w-2/3"
                 />
             </div>
-            <div className="flex items-center justify-between">
+            {/* The model is now the primary detection method, so this switch is not needed. */}
+            {/* <div className="flex items-center justify-between">
                 <Label htmlFor="use-detection-model">Use Detection Model</Label>
                 <Switch id="use-detection-model" checked={controls.useDetectionModel} onCheckedChange={(val) => handleInputChange('useDetectionModel', val)} />
-            </div>
+            </div> */}
             <div className="flex items-center justify-between">
                 <Label htmlFor="use-live-weather">Use Live Weather</Label>
-                <Switch id="use-live-weather" checked={controls.useLiveWeather} onCheckedChange={(val) => handleInputChange('useLiveWeather', val)} />
+                <Switch id="use-live-weather" checked={controls.useLiveWeather} onCheckedChange={(val) => handleInputChange('useLiveWeather', val)} disabled />
             </div>
         </div>
 

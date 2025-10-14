@@ -1,16 +1,19 @@
+
 import { addDays, format } from 'date-fns';
 import type { AppControls, DetectionBox, DetectionResult, ForecastResult, Stage } from './types';
 
 // Mocks the output of a tomato detection model.
 export function mockTomatoDetection(imageUrl: string): DetectionResult {
   const detections = Math.floor(Math.random() * 25) + 10; // 10 to 34 detections
-  const stages: Stage[] = ['immature', 'ripening', 'mature'];
-  const stageCounts: Record<Stage, number> = { immature: 0, ripening: 0, mature: 0 };
+  const stages: Stage[] = ['immature', 'ripening', 'mature', 'flower'];
+  const stageCounts: Record<Stage, number> = { immature: 0, ripening: 0, mature: 0, flower: 0 };
   const boxes: DetectionBox[] = [];
 
   for (let i = 0; i < detections; i++) {
     const stage = stages[Math.floor(Math.random() * stages.length)];
     stageCounts[stage]++;
+
+    if (stage === 'flower') continue; // Flowers don't have boxes in this mock
 
     const x1 = Math.random() * 0.8;
     const y1 = Math.random() * 0.8;

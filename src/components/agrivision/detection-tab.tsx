@@ -1,26 +1,15 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DetectionResult, Stage } from "@/lib/types";
 import { ImageWithBoxes } from "./image-with-boxes";
 import { UploadCloud } from "lucide-react";
 import Image from "next/image";
 
-interface DetectionTabProps {
-  result: DetectionResult | null;
-  isLoading: boolean;
-  imageUrl: string | null;
-}
-
-const stageColors: Record<Stage, string> = {
-  immature: "border-green-500",
-  ripening: "border-amber-500",
-  mature: "border-red-500",
-};
-
 const stageBG: Record<Stage, string> = {
+  flower: "bg-pink-400",
   immature: "bg-green-500",
   ripening: "bg-amber-500",
   mature: "bg-red-500",
@@ -65,13 +54,14 @@ export function DetectionTab({ result, isLoading, imageUrl }: DetectionTabProps)
     );
   }
 
-  const { detections, stageCounts, boxes } = result;
+  const { detections, stageCounts, boxes, summary } = result;
 
-  const maturityDistribution = [
-    { stage: "immature", value: (stageCounts.immature / detections) * 100, color: "bg-green-500" },
-    { stage: "ripening", value: (stageCounts.ripening / detections) * 100, color: "bg-amber-500" },
-    { stage: "mature", value: (stageCounts.mature / detections) * 100, color: "bg-red-500" },
-  ];
+  const totalFruits = stageCounts.immature + stageCounts.ripening + stageCounts.mature;
+  const maturityDistribution = totalFruits > 0 ? [
+    { stage: "immature", value: (stageCounts.immature / totalFruits) * 100, color: "bg-green-500" },
+    { stage: "ripening", value: (stageCounts.ripening / totalFruits) * 100, color: "bg-amber-500" },
+    { stage: "mature", value: (stageCounts.mature / totalFruits) * 100, color: "bg-red-500" },
+  ] : [];
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -79,7 +69,7 @@ export function DetectionTab({ result, isLoading, imageUrl }: DetectionTabProps)
         <CardHeader>
           <CardTitle className="font-headline">Detection Result</CardTitle>
           <CardDescription>
-            Analyzed image with {detections} tomatoes detected.
+            {summary || `Analyzed image with ${detections} tomatoes detected.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,11 +83,13 @@ export function DetectionTab({ result, isLoading, imageUrl }: DetectionTabProps)
             <CardTitle className="font-headline">Stage Classification</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex rounded-full overflow-hidden h-3">
-              {maturityDistribution.map(d => (
-                <div key={d.stage} style={{ width: `${d.value}%` }} className={d.color}></div>
-              ))}
-            </div>
+             {totalFruits > 0 && (
+                <div className="flex rounded-full overflow-hidden h-3">
+                {maturityDistribution.map(d => (
+                    <div key={d.stage} style={{ width: `${d.value}%` }} className={d.color}></div>
+                ))}
+                </div>
+            )}
             <div className="space-y-2 text-sm">
               {Object.entries(stageCounts).map(([stage, count]) => (
                 <div key={stage} className="flex items-center justify-between">
@@ -111,20 +103,6 @@ export function DetectionTab({ result, isLoading, imageUrl }: DetectionTabProps)
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Overall Maturity</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-muted-foreground">{result.growthStage}</span>
-                    <Progress value={result.confidence * 100} className="w-full" />
-                    <span className="text-sm font-bold">{(result.confidence * 100).toFixed(0)}%</span>
-                </div>
-            </CardContent>
-        </Card>
-
       </div>
     </div>
   );
@@ -153,14 +131,6 @@ function DetectionSkeleton() {
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-full" />
           </CardContent>
-        </Card>
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-8 w-32" />
-            </CardHeader>
-            <CardContent>
-                <Skeleton className="h-10 w-full" />
-            </CardContent>
         </Card>
       </div>
     </div>
