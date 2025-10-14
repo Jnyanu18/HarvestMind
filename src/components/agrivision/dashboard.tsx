@@ -40,7 +40,7 @@ export function Dashboard() {
     forecastDays: 14,
     gddBaseC: 10,
     harvestCapacityKgDay: 20,
-    useDetectionModel: false,
+    useDetectionModel: true,
     useLiveWeather: false,
     includePriceForecast: true,
     district: "Coimbatore",
@@ -83,7 +83,15 @@ export function Dashboard() {
               const response = await runTomatoAnalysis({ photoDataUri, contentType: image.contentType! });
 
               if (!response.success || !response.data) {
-                throw new Error(response.error || "Analysis failed.");
+                let errorMessage = 'An unknown error occurred during analysis.';
+                if (response.error) {
+                    if (response.error.includes('API key not valid')) {
+                        errorMessage = 'Your Gemini API key is not valid. Please check your .env file.';
+                    } else {
+                        errorMessage = response.error;
+                    }
+                }
+                throw new Error(errorMessage);
               }
 
               const analysis: TomatoAnalysisResult = response.data;
@@ -165,7 +173,7 @@ export function Dashboard() {
       </Sidebar>
       <SidebarInset className="flex flex-col">
         <AgriVisionHeader />
-        <main className="flex flex-1 flex-col gap-4 p-4 pt-0 lg:gap-6 lg:p-6 lg:pt-0">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className={isMobile ? 'grid w-full grid-cols-2' : ''}>
               {navItems.map(item => (
