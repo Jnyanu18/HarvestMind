@@ -25,7 +25,6 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  // Use a state object for the image to store both URL and File object
   const [image, setImage] = useState<{ url: string | null; file: File | null }>({
     url: PlaceHolderImages[0]?.imageUrl || null,
     file: null,
@@ -52,14 +51,17 @@ export function Dashboard() {
   const handleImageUpload = (file: File) => {
     const newImageUrl = URL.createObjectURL(file);
     setImage({ url: newImageUrl, file });
-    // Clear previous results when a new image is uploaded
+    // Clear previous results when a new image is uploaded for a better user experience
     setDetectionResult(null);
     setForecastResult(null);
     setMarketResult(null);
   };
   
   const handleAnalysis = useCallback(async () => {
-    if (!image.url) return;
+    if (!image.url) {
+      toast({ variant: 'destructive', title: 'No Image', description: 'Please upload an image first.' });
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -80,25 +82,39 @@ export function Dashboard() {
                 const response = await runTomatoDetection({ photoDataUri: dataUri });
 
                 if (response.success && response.data) {
-                    detection = { ...response.data, imageUrl: image.url! };
+                    // Ensure the response data conforms to DetectionResult
+                    const resultData = response.data;
+                    detection = {
+                      ...resultData,
+                      imageUrl: image.url!,
+                      plantId: resultData.plantId ?? 1,
+                      detections: resultData.detections ?? 0,
+                      boxes: resultData.boxes ?? [],
+                      stageCounts: resultData.stageCounts ?? { immature: 0, ripening: 0, mature: 0 },
+                      growthStage: resultData.growthStage ?? 'Immature',
+                      avgBboxArea: resultData.avgBboxArea ?? 0,
+                      confidence: resultData.confidence ?? 0,
+                    };
+                    setDetectionResult(detection);
+                    const forecast = calculateYieldForecast(detection, controls);
+                    setForecastResult(forecast);
                 } else {
                     toast({ variant: 'destructive', title: 'Detection Model Error', description: response.error });
-                    setIsLoading(false);
-                    return;
                 }
-                 setDetectionResult(detection);
-                 const forecast = calculateYieldForecast(detection, controls);
-                 setForecastResult(forecast);
-                 setIsLoading(false);
+                setIsLoading(false);
             };
+            reader.onerror = () => {
+                toast({ variant: 'destructive', title: 'File Error', description: 'Could not read the image file.' });
+                setIsLoading(false);
+            }
         }
       } else {
-        // Simulate model inference
+        // Fallback to mock data if the switch is off
         detection = mockTomatoDetection(image.url);
         setDetectionResult(detection);
         const forecast = calculateYieldForecast(detection, controls);
         setForecastResult(forecast);
-        setTimeout(() => setIsLoading(false), 1000);
+        setTimeout(() => setIsLoading(false), 500); // Simulate processing time
       }
     } catch (error) {
         console.error("Analysis failed:", error);
@@ -108,6 +124,7 @@ export function Dashboard() {
   }, [image, controls, toast]);
   
   React.useEffect(() => {
+    // Recalculate forecast whenever controls change AND a detection result exists
     if(detectionResult) {
       const forecast = calculateYieldForecast(detectionResult, controls);
       setForecastResult(forecast);

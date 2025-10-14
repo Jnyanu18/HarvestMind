@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * @fileOverview A Mask R-CNN model based tomato detection and stage classification flow.
+ * @fileOverview An AI model based tomato detection and stage classification flow.
  *
  * - runDetectionModel - A function that handles running the model for detection and classification.
  * - TomatoDetectionInput - The input type for the runDetectionModel function.
@@ -10,20 +10,22 @@
 
 import { ai } from '@/ai/genkit';
 import { TomatoDetectionInputSchema, TomatoDetectionOutputSchema, type TomatoDetectionOutput as TomatoDetectionOutputType } from '@/lib/types';
-import type { TomatoDetectionInput, Stage } from '@/lib/types';
+import type { TomatoDetectionInput } from '@/lib/types';
 
 
 export async function runDetectionModel(input: TomatoDetectionInput): Promise<TomatoDetectionOutputType> {
   const result = await tomatoDetectionFlow(input);
-  
-  // Calculate derived values that the model doesn't directly provide
-  const stageCounts: Record<Stage, number> = { immature: 0, ripening: 0, mature: 0 };
-  (result.boxes || []).forEach(b => {
-    stageCounts[b.stage]++;
-  });
 
+  // The model may not return all fields, so we calculate derived values here for consistency.
   const detections = result.boxes?.length ?? 0;
   
+  const stageCounts = { immature: 0, ripening: 0, mature: 0 };
+  if (result.boxes) {
+    for (const box of result.boxes) {
+      stageCounts[box.stage]++;
+    }
+  }
+
   let growthStage: 'Immature' | 'Ripening' | 'Mature' = 'Immature';
   if (detections > 0) {
       if (stageCounts.mature > detections / 2) {
@@ -34,7 +36,9 @@ export async function runDetectionModel(input: TomatoDetectionInput): Promise<To
   }
 
   const avgBboxArea = detections > 0 && result.boxes ? result.boxes.reduce((acc, { box }) => acc + (box[2] - box[0]) * (box[3] - box[1]), 0) / detections : 0;
-  const confidence = result.confidence ?? (0.92 + Math.random() * 0.07); // Higher base confidence for better model
+  
+  // Use model confidence if provided, otherwise generate a high-confidence placeholder.
+  const confidence = result.confidence ?? (0.92 + Math.random() * 0.07);
 
   return {
       ...result,
@@ -50,14 +54,12 @@ const prompt = ai.definePrompt({
     name: 'tomatoDetectionPrompt',
     input: { schema: TomatoDetectionInputSchema },
     output: { schema: TomatoDetectionOutputSchema },
-    prompt: `You are a specialized agricultural AI model, specifically a high-accuracy Mask R-CNN model trained to detect tomatoes in an image and classify their ripeness. Your architecture provides precise instance segmentation.
+    prompt: `You are a specialized agricultural AI model trained to detect tomatoes in an image and classify their ripeness.
   
 Your task is to analyze the provided image and identify all tomatoes. For each detected tomato, provide its bounding box and classify its ripeness stage.
   
 - Bounding Boxes: Provide normalized coordinates [x1, y1, x2, y2] for each box.
 - Ripeness Stages: Classify each tomato into one of three stages: 'immature' (green), 'ripening' (yellow/orange), or 'mature' (red).
-  
-Based on your detections, also determine the overall 'growthStage' of the plant shown in the image.
   
 Analyze this image: {{media url=photoDataUri}}
   
@@ -72,6 +74,7 @@ const tomatoDetectionFlow = ai.defineFlow(
     },
     async (input) => {
         const { output } = await prompt(input);
+        // The prompt is configured to return a valid object, so we can be confident in the output.
         return output!;
     }
 );
