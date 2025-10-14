@@ -42,7 +42,14 @@ export async function runTomatoAnalysis(input: AnalyzeTomatoInput) {
     return { success: true, data: result };
   } catch (error) {
     console.error('Error in tomato analysis flow:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during analysis.';
+    let errorMessage = 'An unknown error occurred during analysis.';
+    if (error instanceof Error) {
+        if (error.message.includes('API key not valid')) {
+            errorMessage = 'Your Gemini API key is not valid. Please check your .env file.';
+        } else {
+            errorMessage = error.message;
+        }
+    }
     return { success: false, error: errorMessage };
   }
 }
