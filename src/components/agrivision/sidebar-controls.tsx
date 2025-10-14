@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useRef } from 'react'
@@ -115,10 +116,6 @@ isLoading,
                     onChange={(e) => handleInputChange('district', e.target.value)}
                     className="w-2/3"
                 />
-            </div>
-            <div className="flex items-center justify-between">
-                <Label htmlFor="use-detection-model">Use Detection Model</Label>
-                <Switch id="use-detection-model" checked={controls.useDetectionModel} onCheckedChange={(val) => handleInputChange('useDetectionModel', val)} />
             </div>
             <div className="flex items-center justify-between">
                 <Label htmlFor="use-live-weather">Use Live Weather</Label>

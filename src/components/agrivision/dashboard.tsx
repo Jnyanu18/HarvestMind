@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -14,7 +15,6 @@ import { MarketTab } from '@/components/agrivision/market-tab';
 import { ChatTab } from '@/components/agrivision/chat-tab';
 import { mockTomatoDetection, calculateYieldForecast } from '@/lib/mock-data';
 import type { MarketPriceForecastingOutput } from '@/ai/flows/market-price-forecasting';
-import { runDetectionModel } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { dataURLtoFile } from '@/lib/utils';
 
@@ -37,7 +37,7 @@ export function Dashboard() {
     forecastDays: 14,
     gddBaseC: 10,
     harvestCapacityKgDay: 20,
-    useDetectionModel: true,
+    useDetectionModel: false, // Defaulting to false as model is removed
     useLiveWeather: false,
     includePriceForecast: true,
     district: "Coimbatore",
@@ -65,57 +65,12 @@ export function Dashboard() {
     setIsLoading(true);
 
     try {
-      let detection;
-      if (controls.useDetectionModel) {
-        // Ensure we have a file to send. If not, fetch the placeholder.
-        let imageFile = image.file;
-        if (!imageFile && image.url) {
-           const fetchedFile = await dataURLtoFile(image.url, 'placeholder.jpg', 'image/jpeg');
-           imageFile = fetchedFile;
-        }
-
-        if(imageFile) {
-            const reader = new FileReader();
-            reader.readAsDataURL(imageFile);
-            reader.onload = async () => {
-                const dataUri = reader.result as string;
-                const response = await runDetectionModel({ photoDataUri: dataUri });
-
-                if (response.success && response.data) {
-                    // Ensure the response data conforms to DetectionResult
-                    const resultData = response.data;
-                    detection = {
-                      ...resultData,
-                      imageUrl: image.url!,
-                      plantId: resultData.plantId ?? 1,
-                      detections: resultData.detections ?? 0,
-                      boxes: resultData.boxes ?? [],
-                      stageCounts: resultData.stageCounts ?? { immature: 0, ripening: 0, mature: 0 },
-                      growthStage: resultData.growthStage ?? 'Immature',
-                      avgBboxArea: resultData.avgBboxArea ?? 0,
-                      confidence: resultData.confidence ?? 0,
-                    };
-                    setDetectionResult(detection);
-                    const forecast = calculateYieldForecast(detection, controls);
-                    setForecastResult(forecast);
-                } else {
-                    toast({ variant: 'destructive', title: 'Detection Model Error', description: response.error });
-                }
-                setIsLoading(false);
-            };
-            reader.onerror = () => {
-                toast({ variant: 'destructive', title: 'File Error', description: 'Could not read the image file.' });
-                setIsLoading(false);
-            }
-        }
-      } else {
-        // Fallback to mock data if the switch is off
-        detection = mockTomatoDetection(image.url);
+        // Fallback to mock data since AI model is removed
+        const detection = mockTomatoDetection(image.url);
         setDetectionResult(detection);
         const forecast = calculateYieldForecast(detection, controls);
         setForecastResult(forecast);
         setTimeout(() => setIsLoading(false), 500); // Simulate processing time
-      }
     } catch (error) {
         console.error("Analysis failed:", error);
         toast({ variant: 'destructive', title: 'Analysis Failed', description: 'An unexpected error occurred.' });
