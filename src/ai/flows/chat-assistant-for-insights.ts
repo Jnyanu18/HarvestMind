@@ -39,21 +39,21 @@ const prompt = ai.definePrompt({
   {{#if detectionResult}}
   **Tomato Detection Analysis:**
   \`\`\`json
-  {{{jsonStringify detectionResult}}}
+  {{detectionResult}}
   \`\`\`
   {{/if}}
 
   {{#if forecastResult}}
   **Yield Forecast Analysis:**
   \`\`\`json
-  {{{jsonStringify forecastResult}}}
+  {{forecastResult}}
   \`\`\`
   {{/if}}
 
   {{#if marketResult}}
   **Market Price & Profit Analysis:**
   \`\`\`json
-  {{{jsonStringify marketResult}}}
+  {{marketResult}}
   \`\`\`
   {{/if}}
 
