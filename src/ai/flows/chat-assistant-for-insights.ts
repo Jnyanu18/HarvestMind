@@ -5,7 +5,7 @@
  *
  * - chatAssistantForInsights - A function that handles the chat assistant interaction.
  * - ChatAssistantForInsightsInput - The input type for the chatAssistantForInsights function.
- * - ChatAssistantForInsightsOutput - The return type for the chatAssistantForInsights function.
+ * - ChatAssistantForInsightsOutput - The return type for the chatAssistantForinsights function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -13,9 +13,9 @@ import {z} from 'genkit';
 
 const ChatAssistantForInsightsInputSchema = z.object({
   query: z.string().describe('The user query about tomato yield, forecasts, or market prices.'),
-  detectionResult: z.any().optional().describe('The latest detection result.'),
-  forecastResult: z.any().optional().describe('The latest forecast result.'),
-  marketResult: z.any().optional().describe('The latest market result.'),
+  detectionResult: z.any().optional().describe('The JSON object containing the results from the tomato detection model.'),
+  forecastResult: z.any().optional().describe('The JSON object containing the yield forecast results.'),
+  marketResult: z.any().optional().describe('The JSON object containing the market price forecast results.'),
 });
 export type ChatAssistantForInsightsInput = z.infer<typeof ChatAssistantForInsightsInputSchema>;
 
@@ -32,16 +32,39 @@ const prompt = ai.definePrompt({
   name: 'chatAssistantForInsightsPrompt',
   input: {schema: ChatAssistantForInsightsInputSchema},
   output: {schema: ChatAssistantForInsightsOutputSchema},
-  prompt: `You are a chat assistant providing insights about tomato yield, forecasts, and market prices.
+  prompt: `You are an expert agricultural chat assistant for the AgriVisionAI platform. Your role is to provide clear, concise, and helpful insights based on the data provided.
 
-  You have access to the following information:
-  - Detection Result: {{detectionResult}}
-  - Forecast Result: {{forecastResult}}
-  - Market Result: {{marketResult}}
+  Here is the context for the user's current session. Use this data to answer their question.
 
-  Based on this information, answer the user's query: {{query}}
+  {{#if detectionResult}}
+  **Tomato Detection Analysis:**
+  \`\`\`json
+  {{{jsonStringify detectionResult}}}
+  \`\`\`
+  {{/if}}
 
-  If the information is not available, respond politely that you cannot answer the question. Format numbers to 2 decimals and include units (kg, ₹/kg).`,
+  {{#if forecastResult}}
+  **Yield Forecast Analysis:**
+  \`\`\`json
+  {{{jsonStringify forecastResult}}}
+  \`\`\`
+  {{/if}}
+
+  {{#if marketResult}}
+  **Market Price & Profit Analysis:**
+  \`\`\`json
+  {{{jsonStringify marketResult}}}
+  \`\`\`
+  {{/if}}
+
+  **User's Question:** "{{query}}"
+
+  **Instructions:**
+  1.  Answer the user's question directly using the provided JSON data.
+  2.  If the data needed to answer the question is not present in the context, politely state that the information is not available and suggest running the required analysis (e.g., "Please run a market forecast to get price predictions.").
+  3.  When mentioning numbers, format them to two decimal places and include relevant units (e.g., kg, ₹, ₹/kg).
+  4.  Keep your answers brief and to the point.
+`,
 });
 
 const chatAssistantForInsightsFlow = ai.defineFlow(
