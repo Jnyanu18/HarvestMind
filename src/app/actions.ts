@@ -10,7 +10,7 @@ import {
   type MarketPriceForecastingInput,
 } from '@/ai/flows/market-price-forecasting';
 import {
-  runYoloModel,
+  runDetectionModel,
 } from '@/ai/flows/tomato-detection';
 import type { TomatoDetectionInput } from '@/lib/types';
 
@@ -39,7 +39,7 @@ export async function runChatAssistant(input: ChatAssistantForInsightsInput) {
 
 export async function runTomatoDetection(input: TomatoDetectionInput) {
   try {
-    const result = await runYoloModel(input);
+    const result = await runDetectionModel(input);
     return { success: true, data: result };
   } catch (error) {
     console.error('Error in tomato detection flow:', error);

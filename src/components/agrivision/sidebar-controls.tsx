@@ -117,8 +117,8 @@ isLoading,
                 />
             </div>
             <div className="flex items-center justify-between">
-                <Label htmlFor="use-yolo">Use YOLO Model</Label>
-                <Switch id="use-yolo" checked={controls.useYolo} onCheckedChange={(val) => handleInputChange('useYolo', val)} />
+                <Label htmlFor="use-detection-model">Use Detection Model</Label>
+                <Switch id="use-detection-model" checked={controls.useDetectionModel} onCheckedChange={(val) => handleInputChange('useDetectionModel', val)} />
             </div>
             <div className="flex items-center justify-between">
                 <Label htmlFor="use-live-weather">Use Live Weather</Label>

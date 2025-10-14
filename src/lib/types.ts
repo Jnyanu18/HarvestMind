@@ -9,7 +9,7 @@ export interface AppControls {
   forecastDays: number;
   gddBaseC: number;
   harvestCapacityKgDay: number;
-  useYolo: boolean;
+  useDetectionModel: boolean;
   useLiveWeather: boolean;
   includePriceForecast: boolean;
   district: string;

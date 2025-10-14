@@ -38,7 +38,7 @@ export function Dashboard() {
     forecastDays: 14,
     gddBaseC: 10,
     harvestCapacityKgDay: 20,
-    useYolo: true,
+    useDetectionModel: true,
     useLiveWeather: false,
     includePriceForecast: true,
     district: "Coimbatore",
@@ -64,7 +64,7 @@ export function Dashboard() {
 
     try {
       let detection;
-      if (controls.useYolo) {
+      if (controls.useDetectionModel) {
         // Ensure we have a file to send. If not, fetch the placeholder.
         let imageFile = image.file;
         if (!imageFile && image.url) {
@@ -82,7 +82,7 @@ export function Dashboard() {
                 if (response.success && response.data) {
                     detection = { ...response.data, imageUrl: image.url! };
                 } else {
-                    toast({ variant: 'destructive', title: 'YOLO Model Error', description: response.error });
+                    toast({ variant: 'destructive', title: 'Detection Model Error', description: response.error });
                     setIsLoading(false);
                     return;
                 }
