@@ -23,8 +23,17 @@ export async function runYoloModel(input: TomatoDetectionInput): Promise<TomatoD
   });
 
   const detections = result.boxes?.length ?? 0;
-  const growthStage = stageCounts.mature > detections / 2 ? 'Mature' : stageCounts.ripening > detections / 3 ? 'Ripening' : 'Immature';
-  const avgBboxArea = detections > 0 ? result.boxes.reduce((acc, { box }) => acc + (box[2] - box[0]) * (box[3] - box[1]), 0) / detections : 0;
+  
+  let growthStage: 'Immature' | 'Ripening' | 'Mature' = 'Immature';
+  if (detections > 0) {
+      if (stageCounts.mature > detections / 2) {
+          growthStage = 'Mature';
+      } else if (stageCounts.ripening > detections / 3) {
+          growthStage = 'Ripening';
+      }
+  }
+
+  const avgBboxArea = detections > 0 && result.boxes ? result.boxes.reduce((acc, { box }) => acc + (box[2] - box[0]) * (box[3] - box[1]), 0) / detections : 0;
   const confidence = result.confidence ?? (0.9 + Math.random() * 0.09);
 
   return {
@@ -62,7 +71,7 @@ const tomatoDetectionFlow = ai.defineFlow(
       outputSchema: TomatoDetectionOutputSchema,
     },
     async (input) => {
-        const result = await prompt(input);
-        return result.output!;
+        const { output } = await prompt(input);
+        return output!;
     }
 );
