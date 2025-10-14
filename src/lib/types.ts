@@ -73,15 +73,17 @@ const DetectionBoxSchema = z.object({
 });
 
 export const TomatoDetectionOutputSchema = z.object({
-  detections: z.number().describe('Total number of tomatoes detected.'),
+  plantId: z.number().optional().describe('Unique identifier for the plant analyzed.'),
+  detections: z.number().optional().describe('Total number of tomatoes detected.'),
   boxes: z.array(DetectionBoxSchema).describe('An array of detected tomato boxes with their stages.'),
   stageCounts: z.object({
     immature: z.number(),
     ripening: z.number(),
     mature: z.number(),
-  }).describe('A count of tomatoes in each ripeness stage.'),
-  growthStage: z.enum(['Immature', 'Ripening', 'Mature']).describe('The overall growth stage of the plant.'),
-  avgBboxArea: z.number().describe('The average bounding box area.'),
-  confidence: z.number().describe('The model\'s confidence score for the overall detection.'),
+  }).optional().describe('A count of tomatoes in each ripeness stage.'),
+  growthStage: z.enum(['Immature', 'Ripening', 'Mature']).optional().describe('The overall growth stage of the plant.'),
+  avgBboxArea: z.number().optional().describe('The average bounding box area.'),
+  confidence: z.number().optional().describe('The model\'s confidence score for the overall detection.'),
+  imageUrl: z.string().optional().describe('URL of the image that was analyzed.'),
 });
 export type TomatoDetectionOutput = z.infer<typeof TomatoDetectionOutputSchema>;
