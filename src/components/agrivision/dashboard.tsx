@@ -14,7 +14,7 @@ import { MarketTab } from '@/components/agrivision/market-tab';
 import { ChatTab } from '@/components/agrivision/chat-tab';
 import { mockTomatoDetection, calculateYieldForecast } from '@/lib/mock-data';
 import type { MarketPriceForecastingOutput } from '@/ai/flows/market-price-forecasting';
-import { runTomatoDetection } from '@/app/actions';
+import { runDetectionModel } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { dataURLtoFile } from '@/lib/utils';
 
@@ -79,7 +79,7 @@ export function Dashboard() {
             reader.readAsDataURL(imageFile);
             reader.onload = async () => {
                 const dataUri = reader.result as string;
-                const response = await runTomatoDetection({ photoDataUri: dataUri });
+                const response = await runDetectionModel({ photoDataUri: dataUri });
 
                 if (response.success && response.data) {
                     // Ensure the response data conforms to DetectionResult
