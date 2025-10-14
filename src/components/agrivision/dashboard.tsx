@@ -42,15 +42,18 @@ export function Dashboard() {
   const handleImageUpload = (file: File) => {
     const newImageUrl = URL.createObjectURL(file);
     setImageUrl(newImageUrl);
-    handleAnalysis(newImageUrl);
+    // Clear previous results when a new image is uploaded
+    setDetectionResult(null);
+    setForecastResult(null);
+    setMarketResult(null);
   };
   
-  const handleAnalysis = (url: string | null) => {
-    if (!url) return;
+  const handleAnalysis = () => {
+    if (!imageUrl) return;
     setIsLoading(true);
     // Simulate model inference
     setTimeout(() => {
-      const detection = mockTomatoDetection(url);
+      const detection = mockTomatoDetection(imageUrl);
       setDetectionResult(detection);
       const forecast = calculateYieldForecast(detection, controls);
       setForecastResult(forecast);
@@ -86,7 +89,7 @@ export function Dashboard() {
            <h2 className="font-headline text-xl font-semibold text-primary">AgriVisionAI</h2>
         </SidebarHeader>
         <SidebarContent>
-           <SidebarControls controls={controls} setControls={setControls} onImageUpload={handleImageUpload} onAnalyze={() => handleAnalysis(imageUrl)} isLoading={isLoading} />
+           <SidebarControls controls={controls} setControls={setControls} onImageUpload={handleImageUpload} onAnalyze={handleAnalysis} isLoading={isLoading} />
         </SidebarContent>
       </Sidebar>
       <SidebarInset className="flex flex-col">
@@ -102,7 +105,7 @@ export function Dashboard() {
               ))}
             </TabsList>
             <TabsContent value="detection">
-              <DetectionTab result={detectionResult} isLoading={isLoading} />
+              <DetectionTab result={detectionResult} isLoading={isLoading} imageUrl={imageUrl}/>
             </TabsContent>
             <TabsContent value="forecast">
               <ForecastTab result={forecastResult} isLoading={isLoading} />

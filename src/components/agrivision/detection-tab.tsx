@@ -6,10 +6,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { DetectionResult, Stage } from "@/lib/types";
 import { ImageWithBoxes } from "./image-with-boxes";
 import { UploadCloud } from "lucide-react";
+import Image from "next/image";
 
 interface DetectionTabProps {
   result: DetectionResult | null;
   isLoading: boolean;
+  imageUrl: string | null;
 }
 
 const stageColors: Record<Stage, string> = {
@@ -24,12 +26,12 @@ const stageBG: Record<Stage, string> = {
   mature: "bg-red-500",
 };
 
-export function DetectionTab({ result, isLoading }: DetectionTabProps) {
+export function DetectionTab({ result, isLoading, imageUrl }: DetectionTabProps) {
   if (isLoading) {
     return <DetectionSkeleton />;
   }
 
-  if (!result) {
+  if (!imageUrl) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-muted-foreground/50 bg-card p-12 text-center">
         <UploadCloud className="h-16 w-16 text-muted-foreground" />
@@ -39,7 +41,31 @@ export function DetectionTab({ result, isLoading }: DetectionTabProps) {
     );
   }
 
-  const { detections, stageCounts, imageUrl, boxes } = result;
+  if (!result) {
+    return (
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="font-headline">Awaiting Analysis</CardTitle>
+            <CardDescription>
+              Click "Analyze & Forecast" to process the uploaded image.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="relative w-full aspect-video overflow-hidden rounded-lg border">
+                <Image 
+                    src={imageUrl} 
+                    alt="Ready for analysis" 
+                    fill 
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+            </div>
+          </CardContent>
+        </Card>
+    );
+  }
+
+  const { detections, stageCounts, boxes } = result;
 
   const maturityDistribution = [
     { stage: "immature", value: (stageCounts.immature / detections) * 100, color: "bg-green-500" },
@@ -57,7 +83,7 @@ export function DetectionTab({ result, isLoading }: DetectionTabProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ImageWithBoxes imageUrl={imageUrl} boxes={boxes} />
+          <ImageWithBoxes imageUrl={result.imageUrl} boxes={boxes} />
         </CardContent>
       </Card>
 
