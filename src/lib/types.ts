@@ -67,6 +67,7 @@ export const AnalyzeTomatoInputSchema = z.object({
     .describe(
       "A photo of a plant, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  contentType: z.string().describe('The MIME type of the image, e.g., "image/jpeg".'),
 });
 export type AnalyzeTomatoInput = z.infer<typeof AnalyzeTomatoInputSchema>;
 

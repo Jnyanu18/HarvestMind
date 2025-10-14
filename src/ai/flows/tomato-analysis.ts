@@ -29,7 +29,7 @@ Analyze this tomato plant image:
 
 Do not include the backticks in the response.
 
-Photo: {{media url=photoDataUri}}`,
+Photo: {{media url=photoDataUri contentType=contentType}}`,
 });
 
 // Define the main flow

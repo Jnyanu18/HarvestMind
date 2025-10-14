@@ -25,9 +25,10 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const [image, setImage] = useState<{ url: string | null; file: File | null }>({
+  const [image, setImage] = useState<{ url: string | null; file: File | null, contentType: string | null }>({
     url: PlaceHolderImages[0]?.imageUrl || null,
     file: null,
+    contentType: 'image/jpeg', // Default for picsum
   });
 
   const [controls, setControls] = useState<AppControls>({
@@ -50,7 +51,7 @@ export function Dashboard() {
 
   const handleImageUpload = (file: File) => {
     const newImageUrl = URL.createObjectURL(file);
-    setImage({ url: newImageUrl, file });
+    setImage({ url: newImageUrl, file, contentType: file.type });
     // Clear previous results when a new image is uploaded for a better user experience
     setDetectionResult(null);
     setForecastResult(null);
@@ -58,7 +59,7 @@ export function Dashboard() {
   };
   
   const handleAnalysis = useCallback(async () => {
-    if (!image.url) {
+    if (!image.url || !image.contentType) {
       toast({ variant: 'destructive', title: 'No Image', description: 'Please upload an image first.' });
       return;
     }
@@ -67,45 +68,51 @@ export function Dashboard() {
     setForecastResult(null);
 
     try {
-      const response = await runTomatoAnalysis({ photoDataUri: image.url });
+      // The Genkit flow expects a data URI. Let's create one.
+      const reader = new FileReader();
+      reader.readAsDataURL(image.file || await dataURLtoFile(image.url, 'analysis-image.jpg', image.contentType));
+      reader.onload = async () => {
+        const photoDataUri = reader.result as string;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error || "Analysis failed.");
-      }
+        const response = await runTomatoAnalysis({ photoDataUri, contentType: image.contentType! });
 
-      const analysis: TomatoAnalysisResult = response.data;
-      
-      const newDetectionResult: DetectionResult = {
-        plantId: Date.now(),
-        detections: analysis.counts.immature + analysis.counts.ripening + analysis.counts.mature,
-        // The new model doesn't provide boxes, so we pass an empty array.
-        // We can ask the model for boxes in a future iteration if needed.
-        boxes: [], 
-        stageCounts: analysis.counts,
-        // Determine overall stage based on counts
-        growthStage: analysis.counts.mature > analysis.counts.immature ? 'Mature' : 'Ripening',
-        // Confidence and bbox area aren't provided by this model
-        avgBboxArea: 0,
-        confidence: 0.9, // Default confidence
-        imageUrl: image.url,
-        summary: analysis.summary
+        if (!response.success || !response.data) {
+          throw new Error(response.error || "Analysis failed.");
+        }
+
+        const analysis: TomatoAnalysisResult = response.data;
+        
+        const newDetectionResult: DetectionResult = {
+          plantId: Date.now(),
+          detections: analysis.counts.immature + analysis.counts.ripening + analysis.counts.mature,
+          boxes: [], 
+          stageCounts: analysis.counts,
+          growthStage: analysis.counts.mature > analysis.counts.immature ? 'Mature' : 'Ripening',
+          avgBboxArea: 0,
+          confidence: 0.9, 
+          imageUrl: image.url!,
+          summary: analysis.summary
+        };
+
+        setDetectionResult(newDetectionResult);
+        
+        if (newDetectionResult) {
+            const forecast = calculateYieldForecast(newDetectionResult, controls);
+            setForecastResult(forecast);
+            setActiveTab('forecast');
+        }
+        setIsLoading(false);
       };
-
-      setDetectionResult(newDetectionResult);
-      
-      if (newDetectionResult) {
-          const forecast = calculateYieldForecast(newDetectionResult, controls);
-          setForecastResult(forecast);
-          setActiveTab('forecast');
+      reader.onerror = (error) => {
+        throw new Error("Failed to read image file.");
       }
 
     } catch (error) {
       console.error("Analysis failed:", error);
       toast({ variant: 'destructive', title: 'Analysis Failed', description: error instanceof Error ? error.message : 'An unexpected error occurred.' });
-    } finally {
       setIsLoading(false);
     }
-  }, [image.url, controls, toast]);
+  }, [image, controls, toast]);
   
   React.useEffect(() => {
     // Recalculate forecast whenever controls change AND a detection result exists
