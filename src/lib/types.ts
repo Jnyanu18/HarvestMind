@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type Stage = 'immature' | 'ripening' | 'mature';
 
 export interface AppControls {
@@ -53,3 +55,33 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: React.ReactNode;
 }
+
+
+// Schema for Tomato Detection Flow
+export const TomatoDetectionInputSchema = z.object({
+  photoDataUri: z
+    .string()
+    .describe(
+      "A photo of a plant, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+});
+export type TomatoDetectionInput = z.infer<typeof TomatoDetectionInputSchema>;
+
+const DetectionBoxSchema = z.object({
+  box: z.tuple([z.number(), z.number(), z.number(), z.number()]).describe("Bounding box coordinates [x1, y1, x2, y2] as percentages."),
+  stage: z.enum(['immature', 'ripening', 'mature']).describe("Ripeness stage of the tomato."),
+});
+
+export const TomatoDetectionOutputSchema = z.object({
+  detections: z.number().describe('Total number of tomatoes detected.'),
+  boxes: z.array(DetectionBoxSchema).describe('An array of detected tomato boxes with their stages.'),
+  stageCounts: z.object({
+    immature: z.number(),
+    ripening: z.number(),
+    mature: z.number(),
+  }).describe('A count of tomatoes in each ripeness stage.'),
+  growthStage: z.enum(['Immature', 'Ripening', 'Mature']).describe('The overall growth stage of the plant.'),
+  avgBboxArea: z.number().describe('The average bounding box area.'),
+  confidence: z.number().describe('The model\'s confidence score for the overall detection.'),
+});
+export type TomatoDetectionOutput = z.infer<typeof TomatoDetectionOutputSchema>;

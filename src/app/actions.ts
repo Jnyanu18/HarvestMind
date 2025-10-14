@@ -9,6 +9,11 @@ import {
   marketPriceForecasting,
   type MarketPriceForecastingInput,
 } from '@/ai/flows/market-price-forecasting';
+import {
+  runYoloModel,
+} from '@/ai/flows/tomato-detection';
+import type { TomatoDetectionInput } from '@/lib/types';
+
 
 export async function runMarketPriceForecasting(
   input: MarketPriceForecastingInput
@@ -29,5 +34,15 @@ export async function runChatAssistant(input: ChatAssistantForInsightsInput) {
   } catch (error) {
     console.error('Error in chat assistant flow:', error);
     return { success: false, error: 'The assistant is currently unavailable.' };
+  }
+}
+
+export async function runTomatoDetection(input: TomatoDetectionInput) {
+  try {
+    const result = await runYoloModel(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in tomato detection flow:', error);
+    return { success: false, error: 'Failed to run tomato detection.' };
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Camera, BarChart3, LineChart, MessageCircle } from 'lucide-react';
 import type { AppControls, DetectionResult, ForecastResult, ChatMessage } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -14,13 +14,23 @@ import { MarketTab } from '@/components/agrivision/market-tab';
 import { ChatTab } from '@/components/agrivision/chat-tab';
 import { mockTomatoDetection, calculateYieldForecast } from '@/lib/mock-data';
 import type { MarketPriceForecastingOutput } from '@/ai/flows/market-price-forecasting';
+import { runTomatoDetection } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
+import { dataURLtoFile } from '@/lib/utils';
+
 
 export function Dashboard() {
   const { isMobile } = useSidebar();
   const [activeTab, setActiveTab] = useState('detection');
   const [isLoading, setIsLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(PlaceHolderImages[0]?.imageUrl || null);
+  const { toast } = useToast();
   
+  // Use a state object for the image to store both URL and File object
+  const [image, setImage] = useState<{ url: string | null; file: File | null }>({
+    url: PlaceHolderImages[0]?.imageUrl || null,
+    file: null,
+  });
+
   const [controls, setControls] = useState<AppControls>({
     avgWeightG: 85,
     postHarvestLossPct: 7,
@@ -41,25 +51,61 @@ export function Dashboard() {
 
   const handleImageUpload = (file: File) => {
     const newImageUrl = URL.createObjectURL(file);
-    setImageUrl(newImageUrl);
+    setImage({ url: newImageUrl, file });
     // Clear previous results when a new image is uploaded
     setDetectionResult(null);
     setForecastResult(null);
     setMarketResult(null);
   };
   
-  const handleAnalysis = () => {
-    if (!imageUrl) return;
+  const handleAnalysis = useCallback(async () => {
+    if (!image.url) return;
     setIsLoading(true);
-    // Simulate model inference
-    setTimeout(() => {
-      const detection = mockTomatoDetection(imageUrl);
-      setDetectionResult(detection);
-      const forecast = calculateYieldForecast(detection, controls);
-      setForecastResult(forecast);
-      setIsLoading(false);
-    }, 1500);
-  };
+
+    try {
+      let detection;
+      if (controls.useYolo) {
+        // Ensure we have a file to send. If not, fetch the placeholder.
+        let imageFile = image.file;
+        if (!imageFile && image.url) {
+           const fetchedFile = await dataURLtoFile(image.url, 'placeholder.jpg', 'image/jpeg');
+           imageFile = fetchedFile;
+        }
+
+        if(imageFile) {
+            const reader = new FileReader();
+            reader.readAsDataURL(imageFile);
+            reader.onload = async () => {
+                const dataUri = reader.result as string;
+                const response = await runTomatoDetection({ photoDataUri: dataUri });
+
+                if (response.success && response.data) {
+                    detection = { ...response.data, imageUrl: image.url! };
+                } else {
+                    toast({ variant: 'destructive', title: 'YOLO Model Error', description: response.error });
+                    setIsLoading(false);
+                    return;
+                }
+                 setDetectionResult(detection);
+                 const forecast = calculateYieldForecast(detection, controls);
+                 setForecastResult(forecast);
+                 setIsLoading(false);
+            };
+        }
+      } else {
+        // Simulate model inference
+        detection = mockTomatoDetection(image.url);
+        setDetectionResult(detection);
+        const forecast = calculateYieldForecast(detection, controls);
+        setForecastResult(forecast);
+        setTimeout(() => setIsLoading(false), 1000);
+      }
+    } catch (error) {
+        console.error("Analysis failed:", error);
+        toast({ variant: 'destructive', title: 'Analysis Failed', description: 'An unexpected error occurred.' });
+        setIsLoading(false);
+    }
+  }, [image, controls, toast]);
   
   React.useEffect(() => {
     if(detectionResult) {
@@ -105,7 +151,7 @@ export function Dashboard() {
               ))}
             </TabsList>
             <TabsContent value="detection">
-              <DetectionTab result={detectionResult} isLoading={isLoading} imageUrl={imageUrl}/>
+              <DetectionTab result={detectionResult} isLoading={isLoading} imageUrl={image.url}/>
             </TabsContent>
             <TabsContent value="forecast">
               <ForecastTab result={forecastResult} isLoading={isLoading} />
