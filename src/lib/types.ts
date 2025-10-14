@@ -20,6 +20,8 @@ export interface DetectionBox {
   stage: Stage;
 }
 
+// This is the primary type for what the UI components will use.
+// It's derived from the AI model's output but contains additional calculated fields.
 export interface DetectionResult {
   plantId: number;
   detections: number;
@@ -57,7 +59,9 @@ export interface ChatMessage {
 }
 
 
-// Schema for Tomato Detection Flow
+// == AI Flow Schemas ==
+
+// Input for the AI detection flow
 export const TomatoDetectionInputSchema = z.object({
   photoDataUri: z
     .string()
@@ -67,23 +71,15 @@ export const TomatoDetectionInputSchema = z.object({
 });
 export type TomatoDetectionInput = z.infer<typeof TomatoDetectionInputSchema>;
 
+
+// The direct output from the AI detection model.
 const DetectionBoxSchema = z.object({
   box: z.tuple([z.number(), z.number(), z.number(), z.number()]).describe("Bounding box coordinates [x1, y1, x2, y2] as percentages."),
   stage: z.enum(['immature', 'ripening', 'mature']).describe("Ripeness stage of the tomato."),
 });
 
 export const TomatoDetectionOutputSchema = z.object({
-  plantId: z.number().optional().describe('Unique identifier for the plant analyzed.'),
-  detections: z.number().optional().describe('Total number of tomatoes detected.'),
   boxes: z.array(DetectionBoxSchema).describe('An array of detected tomato boxes with their stages.'),
-  stageCounts: z.object({
-    immature: z.number(),
-    ripening: z.number(),
-    mature: z.number(),
-  }).optional().describe('A count of tomatoes in each ripeness stage.'),
-  growthStage: z.enum(['Immature', 'Ripening', 'Mature']).optional().describe('The overall growth stage of the plant.'),
-  avgBboxArea: z.number().optional().describe('The average bounding box area.'),
-  confidence: z.number().optional().describe('The model\'s confidence score for the overall detection.'),
-  imageUrl: z.string().optional().describe('URL of the image that was analyzed.'),
+  confidence: z.number().optional().describe('The model\'s confidence score for the overall detection (from 0 to 1).'),
 });
 export type TomatoDetectionOutput = z.infer<typeof TomatoDetectionOutputSchema>;

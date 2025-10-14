@@ -4,10 +4,10 @@ import type { ForecastResult } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Line, LineChart, Area, AreaChart } from 'recharts';
+import { BarChart as BarChartIcon, BarChart3, PackageCheck, Shovel, Trees } from 'lucide-react';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Skeleton } from '../ui/skeleton';
 import { formatNumber } from '@/lib/utils';
-import { CircleDollarSign, Package, Shovel } from 'lucide-react';
 
 interface ForecastTabProps {
   result: ForecastResult | null;
@@ -21,15 +21,15 @@ export function ForecastTab({ result, isLoading }: ForecastTabProps) {
 
   if (!result) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-muted-foreground/50 bg-card p-12 text-center">
-        <BarChart3 className="h-16 w-16 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-muted-foreground/50 bg-card p-12 text-center h-[50vh]">
+        <BarChartIcon className="h-16 w-16 text-muted-foreground" />
         <h3 className="font-headline text-xl font-semibold">No Forecast Data</h3>
         <p className="text-muted-foreground">Upload an image and run the analysis to generate a yield forecast.</p>
       </div>
     );
   }
 
-  const { yield_now_kg, sellable_kg, daily, harvest_plan } = result;
+  const { yield_now_kg, sellable_kg, daily, harvest_plan, notes } = result;
 
   const chartConfig = {
     ready_kg: {
@@ -42,30 +42,33 @@ export function ForecastTab({ result, isLoading }: ForecastTabProps) {
     <div className="grid auto-rows-max items-start gap-4 md:gap-8 lg:col-span-2">
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="font-headline text-base">Current Yield</CardTitle>
-            <CardDescription>Estimated total yield from mature fruit</CardDescription>
+            <Trees className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(yield_now_kg)} kg</div>
+            <div className="text-3xl font-bold">{formatNumber(yield_now_kg)} kg</div>
+            <p className="text-xs text-muted-foreground">Estimated total yield from mature fruit</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="font-headline text-base">Sellable Yield</CardTitle>
-            <CardDescription>After post-harvest loss ({formatNumber(result.sellable_kg/yield_now_kg * 100, 0)}%)</CardDescription>
+            <PackageCheck className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(sellable_kg)} kg</div>
+            <div className="text-3xl font-bold">{formatNumber(sellable_kg)} kg</div>
+            <p className="text-xs text-muted-foreground">After estimated post-harvest loss</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="font-headline text-base">Total Forecasted</CardTitle>
-            <CardDescription>Total harvestable in forecast period</CardDescription>
+            <Shovel className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatNumber(harvest_plan.reduce((a, b) => a + b.harvest_kg, 0))} kg</div>
+            <div className="text-3xl font-bold">{formatNumber(harvest_plan.reduce((a, b) => a + b.harvest_kg, 0))} kg</div>
+            <p className="text-xs text-muted-foreground">Total harvest in forecast period</p>
           </CardContent>
         </Card>
       </div>
@@ -81,7 +84,7 @@ export function ForecastTab({ result, isLoading }: ForecastTabProps) {
               <AreaChart data={daily} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} />
-                <YAxis />
+                <YAxis unit="kg" />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Area type="monotone" dataKey="ready_kg" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} name="Ready (kg)"/>
               </AreaChart>

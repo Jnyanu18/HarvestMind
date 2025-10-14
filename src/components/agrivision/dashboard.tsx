@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Camera, BarChart3, LineChart, MessageCircle } from 'lucide-react';
+import { Camera, BarChart3, LineChart, MessageCircle, BarChart as BarChartIcon } from 'lucide-react';
 import type { AppControls, DetectionResult, ForecastResult, ChatMessage } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
@@ -64,6 +64,8 @@ export function Dashboard() {
       return;
     }
     setIsLoading(true);
+    setDetectionResult(null);
+    setForecastResult(null);
 
     try {
       let detection: DetectionResult | null = null;
@@ -72,7 +74,7 @@ export function Dashboard() {
         if (response.success && response.data) {
           detection = response.data;
         } else {
-          toast({ variant: 'destructive', title: 'Detection Failed', description: response.error });
+          toast({ variant: 'destructive', title: 'Detection Failed', description: response.error, duration: 5000 });
           setIsLoading(false);
           return;
         }
@@ -85,6 +87,8 @@ export function Dashboard() {
       if (detection) {
         const forecast = calculateYieldForecast(detection, controls);
         setForecastResult(forecast);
+        // Switch to forecast tab after successful analysis
+        setActiveTab('forecast');
       }
     } catch (error) {
         console.error("Analysis failed:", error);
@@ -111,7 +115,7 @@ export function Dashboard() {
 
   const navItems = [
     { id: 'detection', label: 'Detection & Stage', icon: Camera },
-    { id: 'forecast', label: 'Forecast Dashboard', icon: BarChart3 },
+    { id: 'forecast', label: 'Forecast Dashboard', icon: BarChartIcon },
     { id: 'market', label: 'Price & Profit', icon: LineChart },
     { id: 'chat', label: 'Chat Assistant', icon: MessageCircle },
   ];
