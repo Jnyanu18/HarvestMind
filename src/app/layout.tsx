@@ -1,10 +1,9 @@
 
 "use client";
 
-import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/lib/i18n';
 import { Suspense } from 'react';
@@ -31,8 +30,8 @@ export default function RootLayout({
             <I18nextProvider i18n={i18n}>
                 <FirebaseClientProvider>
                     {children}
+                    <Toaster />
                 </FirebaseClientProvider>
-                <Toaster />
             </I18nextProvider>
         </Suspense>
       </body>
