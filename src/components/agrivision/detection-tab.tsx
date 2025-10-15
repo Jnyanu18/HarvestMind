@@ -23,6 +23,7 @@ const stageColors: { [key: string]: string } = {
   ripening: "bg-amber-500",
   pink: "bg-rose-400",
   mature: "bg-red-500",
+  overripened: "bg-purple-700",
   fruitlet: "bg-yellow-300",
   default: "bg-gray-400",
 };

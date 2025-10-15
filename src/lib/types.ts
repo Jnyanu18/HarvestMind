@@ -1,7 +1,7 @@
 
 import { z } from 'zod';
 
-export type Stage = 'immature' | 'ripening' | 'mature' | 'flower' | 'breaker' | 'pink' | 'fruitlet';
+export type Stage = 'immature' | 'ripening' | 'mature' | 'flower' | 'breaker' | 'pink' | 'fruitlet' | 'overripened';
 
 export const AppControlsSchema = z.object({
   avgWeightG: z.number(),
@@ -32,6 +32,7 @@ export const StageCountsSchema = z.object({
     pink: z.number().optional(),
     mature: z.number().optional(),
     fruitlet: z.number().optional(),
+    overripened: z.number().optional(),
 }).passthrough(); // Allow other keys
 export type StageCounts = z.infer<typeof StageCountsSchema>;
 
