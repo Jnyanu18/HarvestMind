@@ -109,6 +109,25 @@ export const PlantAnalysisResultSchema = z.object({
 });
 export type PlantAnalysisResult = z.infer<typeof PlantAnalysisResultSchema>;
 
+export const YieldForecastInputSchema = z.object({
+  analysis: PlantAnalysisResultSchema.describe("The result from the plant analysis flow, including stage counts."),
+  controls: AppControlsSchema.describe("The user-defined parameters for the farm."),
+});
+export type YieldForecastInput = z.infer<typeof YieldForecastInputSchema>;
+
+export const YieldForecastOutputSchema = z.object({
+  totalExpectedYieldKg: z.number().describe("The total estimated yield in kilograms for the entire lifecycle of the current fruit generation."),
+  peakHarvestDate: z.string().describe("The estimated date (YYYY-MM-DD) when the harvest will be at its peak."),
+  yieldCurve: z.array(z.object({
+    date: z.string().describe("The date for the data point (YYYY-MM-DD)."),
+    yieldKg: z.number().describe("The estimated cumulative harvestable yield in kilograms on that date."),
+  })).describe("An array of data points representing the yield curve over time."),
+  confidence: z.number().min(0).max(1).describe("A confidence score (0 to 1) for the forecast."),
+  notes: z.string().describe("A brief summary and any important notes about the forecast."),
+});
+export type YieldForecastOutput = z.infer<typeof YieldForecastOutputSchema>;
+
+
 export const WeatherDataSchema = z.object({
     date: z.string().describe('The date for the forecast in YYYY-MM-DD format.'),
     temp_max_c: z.number().describe('The maximum forecasted temperature in Celsius.'),
