@@ -53,7 +53,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         setIsLoading(false);
         if (user) {
-            router.push('/');
+            router.push('/dashboard');
         }
     }, (error) => {
         setIsLoading(false);
@@ -81,7 +81,7 @@ export default function LoginPage() {
 }, [auth, router, toast]);
 
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>>) => {
     setIsLoading(true);
     initiateEmailSignIn(auth, values.email, values.password);
   };
@@ -92,6 +92,10 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40">
+        <Link href="/" className="absolute left-8 top-8 py-2 px-4 rounded-md no-underline text-foreground bg-btn-background hover:bg-btn-background-hover flex items-center group text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Back
+        </Link>
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <Leaf className="h-10 w-10 text-primary" />
