@@ -2,12 +2,21 @@
 'use client';
 
 import Link from 'next/link';
-import { Leaf, Bot, BarChart, ShoppingCart } from 'lucide-react';
+import { Leaf, Bot, BarChart, ShoppingCart, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useUser } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
     const { user, isUserLoading } = useUser();
+    const auth = useAuth();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await signOut(auth);
+        router.push('/'); // Redirect to home page after logout
+    };
 
     const features = [
     {
@@ -38,9 +47,15 @@ export default function HomePage() {
           <div className="flex flex-1 items-center justify-end space-x-4">
              <nav className="flex items-center space-x-2">
                 {isUserLoading ? null : user ? (
-                    <Button asChild>
-                        <Link href="/dashboard">Go to Dashboard</Link>
-                    </Button>
+                    <>
+                        <Button asChild>
+                            <Link href="/dashboard">Go to Dashboard</Link>
+                        </Button>
+                        <Button variant="ghost" onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4"/>
+                            Logout
+                        </Button>
+                    </>
                 ) : (
                     <>
                         <Button variant="ghost" asChild>

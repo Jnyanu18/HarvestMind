@@ -53,7 +53,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/dashboard');
+      router.push('/');
     }
   }, [user, isUserLoading, router]);
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         setIsLoading(false);
         if (user) {
-            router.push('/dashboard');
+            router.push('/');
         }
     }, (error) => {
         setIsLoading(false);
