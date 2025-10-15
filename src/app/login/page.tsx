@@ -81,7 +81,7 @@ export default function LoginPage() {
 }, [auth, router, toast]);
 
 
-  const onSubmit = (values: z.infer<typeof formSchema>>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     initiateEmailSignIn(auth, values.email, values.password);
   };

@@ -84,7 +84,7 @@ export default function RegisterPage() {
     return () => unsubscribe();
   }, [auth, router, toast]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     initiateEmailSignUp(auth, values.email, values.password);
   };
