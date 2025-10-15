@@ -26,9 +26,9 @@ Follow these steps:
 1.  **Identify the Plant:** Determine the type of plant shown in the image (e.g., "Tomato", "Lemon").
 2.  **Count and Classify:** Count all visible fruits and flowers. Classify them into appropriate growth stages for the identified plant. For example, for a tomato plant, you might use 'flower', 'immature', 'breaker', 'ripening', 'pink', and 'mature'. For a lemon, you might use 'flower', 'fruitlet', 'immature', and 'mature'.
 3.  **Return JSON:** Respond with a JSON object that includes:
-    -   `plantType`: The identified name of the plant.
-    -   `summary`: A short, one-sentence summary of your findings.
-    -   `stages`: An array of objects, where each object has a 'stage' (string) and 'count' (number).
+    -   \`plantType\`: The identified name of the plant.
+    -   \`summary\`: A short, one-sentence summary of your findings.
+    -   \`stages\`: An array of objects, where each object has a 'stage' (string) and 'count' (number).
 
 **Example for a Lemon Plant:**
 \`\`\`json
