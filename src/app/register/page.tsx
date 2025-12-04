@@ -19,11 +19,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { runEmailSignUp } from '../actions';
+import { createUserWithEmailAndPassword, type AuthError } from 'firebase/auth';
+
 
 const formSchema = z.object({
   email: z.string().email({
@@ -39,6 +40,7 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -51,27 +53,36 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    const result = await runEmailSignUp(values);
-    setIsLoading(false);
-
-    if (result.success) {
+    try {
+        await createUserWithEmailAndPassword(auth, values.email, values.password);
         toast({
             title: 'Registration Successful',
             description: 'Welcome to AgriVisionAI!',
         });
-        router.push('/');
-    } else {
+        router.push('/dashboard');
+    } catch (e) {
+        const error = e as AuthError;
+        let errorMessage = 'An unknown error occurred during registration.';
+        
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email is already in use. Please try logging in instead.';
+        } else {
+            console.error('Firebase Auth Error:', error.code, error.message);
+        }
+        
         toast({
             variant: 'destructive',
             title: 'Registration Failed',
-            description: result.error,
+            description: errorMessage,
         });
+    } finally {
+        setIsLoading(false);
     }
   };
 

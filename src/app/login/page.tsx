@@ -19,11 +19,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
 import { useAuth, useUser } from '@/firebase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf } from 'lucide-react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword, type AuthError } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
 
 const formSchema = z.object({
@@ -53,37 +52,33 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setIsLoading(false);
-        if (user) {
-            router.push('/');
-        }
-    }, (error) => {
-        setIsLoading(false);
-        const errorCode = (error as any).code;
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    try {
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+        router.push('/dashboard');
+    } catch (e) {
+        const error = e as AuthError;
         let errorMessage = "An unknown error occurred during authentication.";
-        if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
+        
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
             errorMessage = 'Invalid email or password. Please try again.';
+        } else {
+            console.error("Firebase Auth Error:", error.code, error.message);
         }
+
         toast({
             variant: 'destructive',
             title: 'Login Failed',
             description: errorMessage,
         });
-    });
-
-    return () => unsubscribe();
-}, [auth, router, toast]);
-
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-    initiateEmailSignIn(auth, values.email, values.password);
+    } finally {
+        setIsLoading(false);
+    }
   };
   
   if (isUserLoading || user) {
