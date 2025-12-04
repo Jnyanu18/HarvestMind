@@ -14,6 +14,8 @@ import {
   type AnalyzePlantInput,
 } from '@/ai/flows/plant-analysis';
 import { forecastYield, type YieldForecastInput, type YieldForecastOutput } from '@/ai/flows/yield-forecasting';
+import { signUpWithEmailAndPassword, type SignUpCredentials } from '@/firebase/auth/signup';
+
 
 export async function runMarketPriceForecasting(
   input: MarketPriceForecastingInput
@@ -64,4 +66,8 @@ export async function runYieldForecast(input: YieldForecastInput): Promise<{ suc
         const errorMessage = error instanceof Error ? error.message : 'Failed to run AI-powered forecast.';
         return { success: false, error: errorMessage };
     }
+}
+
+export async function runEmailSignUp(credentials: SignUpCredentials) {
+    return signUpWithEmailAndPassword(credentials);
 }

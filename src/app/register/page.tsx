@@ -19,12 +19,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { initiateEmailSignUp } from '@/firebase/non-blocking-login';
-import { useAuth, useUser } from '@/firebase';
+import { useUser } from '@/firebase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf } from 'lucide-react';
-import { onAuthStateChanged } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
+import { runEmailSignUp } from '../actions';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -39,7 +38,6 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const { t } = useTranslation();
 
@@ -56,37 +54,25 @@ export default function RegisterPage() {
       router.push('/');
     }
   }, [user, isUserLoading, router]);
+  
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    const result = await runEmailSignUp(values);
+    setIsLoading(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setIsLoading(false);
-        if (user) {
-            toast({
-                title: 'Registration Successful',
-                description: 'Welcome to AgriVisionAI!',
-            });
-            router.push('/');
-        }
-    }, (error) => {
-        setIsLoading(false);
-        const errorCode = (error as any).code;
-        let errorMessage = "An unknown error occurred during registration.";
-        if (errorCode === 'auth/email-already-in-use') {
-            errorMessage = 'This email is already registered. Please log in.';
-        }
+    if (result.success) {
+        toast({
+            title: 'Registration Successful',
+            description: 'Welcome to AgriVisionAI!',
+        });
+        router.push('/');
+    } else {
         toast({
             variant: 'destructive',
             title: 'Registration Failed',
-            description: errorMessage,
+            description: result.error,
         });
-    });
-
-    return () => unsubscribe();
-  }, [auth, router, toast]);
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-    initiateEmailSignUp(auth, values.email, values.password);
+    }
   };
 
   if (isUserLoading || user) {
