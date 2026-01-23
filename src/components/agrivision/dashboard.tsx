@@ -27,7 +27,8 @@ import { YieldForecastTab } from './yield-forecast-tab';
 export function Dashboard() {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('detection');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
+  const [isYieldForecastLoading, setIsYieldForecastLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   
@@ -71,7 +72,7 @@ export function Dashboard() {
       toast({ variant: 'destructive', title: 'No Image', description: 'Please upload an image first.' });
       return;
     }
-    setIsLoading(true);
+    setIsAnalysisLoading(true);
     setPlantAnalysisResult(null);
     setHarvestForecastResult(null);
     setYieldForecastResult(null);
@@ -135,7 +136,7 @@ export function Dashboard() {
       console.error("Analysis failed:", error);
       toast({ variant: 'destructive', title: 'Analysis Failed', description: error instanceof Error ? error.message : 'An unexpected error occurred.' });
     } finally {
-      setIsLoading(false);
+      setIsAnalysisLoading(false);
     }
   }, [image, controls, toast]);
 
@@ -144,7 +145,7 @@ export function Dashboard() {
         toast({ variant: "destructive", title: "No Analysis Data", description: "Please run the initial analysis first." });
         return;
     }
-    setIsLoading(true);
+    setIsYieldForecastLoading(true);
     setYieldForecastResult(null);
     try {
         const response = await runYieldForecast({
@@ -160,7 +161,7 @@ export function Dashboard() {
         console.error("Yield forecast failed:", error);
         toast({ variant: "destructive", title: "Yield Forecast Failed", description: error instanceof Error ? error.message : 'An unexpected error occurred.' });
     } finally {
-        setIsLoading(false);
+        setIsYieldForecastLoading(false);
     }
   }, [plantAnalysisResult, controls, toast]);
   
@@ -216,8 +217,8 @@ export function Dashboard() {
                 onImageUpload={handleImageUpload} 
                 onAnalyze={handleAnalysis} 
                 onYieldForecast={handleYieldForecast}
-                isAnalysisLoading={isLoading} 
-                isForecastLoading={isLoading}
+                isAnalysisLoading={isAnalysisLoading} 
+                isForecastLoading={isYieldForecastLoading}
                 isYieldForecastDisabled={!plantAnalysisResult}
             />
         </SidebarContent>
@@ -250,13 +251,13 @@ export function Dashboard() {
                   confidence: 0.9, 
                   imageUrl: image.url!,
                   summary: plantAnalysisResult.summary
-              } : null} isLoading={isLoading} imageUrl={image.url}/>
+              } : null} isLoading={isAnalysisLoading} imageUrl={image.url}/>
             </TabsContent>
             <TabsContent value="harvest-forecast">
-              <HarvestForecastTab result={harvestForecastResult} isLoading={isLoading} />
+              <HarvestForecastTab result={harvestForecastResult} isLoading={isAnalysisLoading} />
             </TabsContent>
             <TabsContent value="yield-forecast">
-                <YieldForecastTab result={yieldForecastResult} isLoading={isLoading} />
+                <YieldForecastTab result={yieldForecastResult} isLoading={isYieldForecastLoading} />
             </TabsContent>
             <TabsContent value="market">
               <MarketTab 
