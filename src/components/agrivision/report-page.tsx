@@ -12,6 +12,7 @@ import { ChartContainer } from '../ui/chart';
 import { Separator } from '../ui/separator';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
 
 interface ReportPageProps {
   imageUrl: string | null;
@@ -52,6 +53,11 @@ export function ReportPage({
   const totalHarvest = forecastResult.harvest_plan.reduce((a, b) => a + b.harvest_kg, 0);
   const expectedRevenue = forecastResult.sellable_kg * marketResult.bestPrice;
   const chartConfig = { ready_kg: { label: t('ready_kg'), color: 'hsl(var(--primary))' } };
+
+  const formattedDaily = forecastResult.daily.map(d => ({
+    ...d,
+    date: parseISO(d.date).getTime(),
+  }));
 
   return (
     <div className="absolute left-0 top-0 -z-50 h-full w-full bg-background font-body print:relative print:z-auto">
@@ -110,9 +116,15 @@ export function ReportPage({
                             </CardHeader>
                             <CardContent>
                                 <ChartContainer config={chartConfig} className="h-[250px] w-full">
-                                    <AreaChart data={forecastResult.daily} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                    <AreaChart data={formattedDaily} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="date" tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} />
+                                        <XAxis 
+                                            dataKey="date" 
+                                            tickFormatter={(value) => format(new Date(value), 'MMM dd')}
+                                            type="number"
+                                            scale="time"
+                                            domain={['dataMin', 'dataMax']}
+                                        />
                                         <YAxis unit="kg" />
                                         <Area type="monotone" dataKey="ready_kg" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
                                     </AreaChart>
