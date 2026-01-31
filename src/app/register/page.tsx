@@ -57,33 +57,35 @@ export default function RegisterPage() {
     }
   }, [user, isUserLoading, router]);
   
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    try {
-        await createUserWithEmailAndPassword(auth, values.email, values.password);
-        toast({
-            title: 'Registration Successful',
-            description: 'Welcome to AgriVisionAI!',
+    createUserWithEmailAndPassword(auth, values.email, values.password)
+        .then(() => {
+            toast({
+                title: 'Registration Successful',
+                description: 'Welcome to AgriVisionAI!',
+            });
+            router.push('/dashboard');
+        })
+        .catch((e) => {
+            const error = e as AuthError;
+            let errorMessage = 'An unknown error occurred during registration.';
+            
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'This email is already in use. Please try logging in instead.';
+            } else {
+                console.error('Firebase Auth Error:', error.code, error.message);
+            }
+            
+            toast({
+                variant: 'destructive',
+                title: 'Registration Failed',
+                description: errorMessage,
+            });
+        })
+        .finally(() => {
+            setIsLoading(false);
         });
-        router.push('/dashboard');
-    } catch (e) {
-        const error = e as AuthError;
-        let errorMessage = 'An unknown error occurred during registration.';
-        
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = 'This email is already in use. Please try logging in instead.';
-        } else {
-            console.error('Firebase Auth Error:', error.code, error.message);
-        }
-        
-        toast({
-            variant: 'destructive',
-            title: 'Registration Failed',
-            description: errorMessage,
-        });
-    } finally {
-        setIsLoading(false);
-    }
   };
 
   if (isUserLoading || user) {

@@ -56,29 +56,31 @@ export default function LoginPage() {
     }
   }, [user, isUserLoading, router]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    try {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
-        router.push('/dashboard');
-    } catch (e) {
-        const error = e as AuthError;
-        let errorMessage = "An unknown error occurred during authentication.";
-        
-        if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            errorMessage = 'Invalid email or password. Please try again.';
-        } else {
-            console.error("Firebase Auth Error:", error.code, error.message);
-        }
+    signInWithEmailAndPassword(auth, values.email, values.password)
+        .then(() => {
+            router.push('/dashboard');
+        })
+        .catch((e) => {
+            const error = e as AuthError;
+            let errorMessage = "An unknown error occurred during authentication.";
+            
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                errorMessage = 'Invalid email or password. Please try again.';
+            } else {
+                console.error("Firebase Auth Error:", error.code, error.message);
+            }
 
-        toast({
-            variant: 'destructive',
-            title: 'Login Failed',
-            description: errorMessage,
+            toast({
+                variant: 'destructive',
+                title: 'Login Failed',
+                description: errorMessage,
+            });
+        })
+        .finally(() => {
+            setIsLoading(false);
         });
-    } finally {
-        setIsLoading(false);
-    }
   };
   
   if (isUserLoading || user) {
