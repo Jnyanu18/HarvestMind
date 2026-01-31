@@ -14,10 +14,6 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     return initializeFirebase();
   }, []); // Empty dependency array ensures this runs only once on mount
 
-  if (!firebaseServices) {
-    return <div>Loading Firebase...</div>;
-  }
-
   return (
     <FirebaseProvider
       firebaseApp={firebaseServices.firebaseApp}

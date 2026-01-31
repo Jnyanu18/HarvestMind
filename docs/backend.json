@@ -1,217 +1,188 @@
 {
   "entities": {
-    "User": {
-      "title": "User",
+    "Plant": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Plant",
       "type": "object",
-      "description": "Represents a user profile with associated farm metadata.",
+      "description": "Represents a tomato plant and its associated data.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user."
+          "description": "Unique identifier for the Plant entity."
         },
-        "numPlants": {
-          "type": "number",
-          "description": "Number of plants in the user's farm."
-        },
-        "district": {
+        "name": {
           "type": "string",
-          "description": "District where the user's farm is located."
+          "description": "Name of the plant."
         },
-        "language": {
+        "location": {
           "type": "string",
-          "description": "Preferred language of the user."
+          "description": "Location where the plant is grown."
+        },
+        "image": {
+          "type": "string",
+          "description": "Base64 encoded image of the plant."
         }
       },
       "required": [
-        "id"
+        "id",
+        "name",
+        "location",
+        "image"
       ]
     },
-    "Plant": {
-      "title": "Plant",
+    "Detection": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Detection",
       "type": "object",
-      "description": "Represents per-image inference data for a plant, including detections, stage counts, and yield estimations.",
+      "description": "Represents the detection results for a given plant image.",
       "properties": {
-        "uid": {
+        "id": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Plant)"
+          "description": "Unique identifier for the Detection entity."
         },
-        "imageUrl": {
+        "plantId": {
           "type": "string",
-          "description": "URL of the image associated with the plant."
+          "description": "Reference to Plant. (Relationship: Plant 1:N Detection)"
         },
-        "detections": {
+        "detectionCount": {
+          "type": "number",
+          "description": "Number of tomatoes detected in the image."
+        },
+        "boxes": {
           "type": "array",
-          "description": "Array of tomato detections in the image.",
+          "description": "Bounding box coordinates for each detected tomato (xyxy).",
           "items": {
-            "type": "object",
-            "properties": {
-              "x1": { "type": "number" },
-              "y1": { "type": "number" },
-              "x2": { "type": "number" },
-              "y2": { "type": "number" },
-              "conf": { "type": "number" }
-            }
+            "type": "string"
           }
         },
         "stageCounts": {
-          "type": "object",
-          "description": "Counts of tomatoes in different growth stages (immature, ripening, mature).",
-          "properties": {
-            "immature": { "type": "number" },
-            "ripening": { "type": "number" },
-            "mature": { "type": "number" }
-          }
+          "type": "string",
+          "description": "Counts of tomatoes in each growth stage (immature, ripening, mature)."
         },
         "growthStage": {
           "type": "string",
-          "description": "Overall growth stage of the plant."
+          "description": "Overall growth stage of the plant (Immature, Ripening, Mature)."
         },
-        "modelVersion": {
+        "avgBboxArea": {
+          "type": "number",
+          "description": "Average bounding box area of detected tomatoes."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Confidence level of the detection."
+        }
+      },
+      "required": [
+        "id",
+        "plantId",
+        "detectionCount",
+        "boxes",
+        "stageCounts",
+        "growthStage",
+        "avgBboxArea",
+        "confidence"
+      ]
+    },
+    "Forecast": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Forecast",
+      "type": "object",
+      "description": "Represents the yield forecast for a given plant, based on various parameters.",
+      "properties": {
+        "id": {
           "type": "string",
-          "description": "Version of the model used for inference."
+          "description": "Unique identifier for the Forecast entity."
+        },
+        "plantId": {
+          "type": "string",
+          "description": "Reference to Plant. (Relationship: Plant 1:N Forecast)"
+        },
+        "detectionId": {
+          "type": "string",
+          "description": "Reference to Detection. (Relationship: Detection 1:1 Forecast)"
         },
         "yieldNowKg": {
           "type": "number",
-          "description": "Estimated current yield in kilograms."
+          "description": "Current estimated yield in kilograms."
         },
         "sellableKg": {
           "type": "number",
-          "description": "Estimated sellable yield in kilograms."
+          "description": "Estimated sellable yield after accounting for post-harvest loss."
         },
-        "readyCurve": {
+        "dailyForecast": {
           "type": "array",
-          "description": "Curve representing the readiness of tomatoes for harvest over time.",
+          "description": "Array of daily forecast data (date, ready_kg, gdd_cum).",
           "items": {
-            "type": "object",
-            "properties": {
-              "date": { "type": "string" },
-              "readyKg": { "type": "number" }
-            }
+            "type": "string"
           }
         },
         "harvestPlan": {
           "type": "array",
-          "description": "Plan for harvesting tomatoes, including dates and quantities.",
-           "items": {
-            "type": "object",
-            "properties": {
-              "date": { "type": "string" },
-              "kg": { "type": "number" }
-            }
-          }
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the plant data was created.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "uid",
-        "imageUrl",
-        "createdAt"
-      ]
-    },
-    "Feedback": {
-      "title": "Feedback",
-      "type": "object",
-      "description": "Represents farmer feedback on plant data, including corrections and notes.",
-      "properties": {
-        "plantId": {
-          "type": "string",
-          "description": "Reference to Plant. (Relationship: Plant 1:N Feedback)"
-        },
-        "uid": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Feedback)"
-        },
-        "missedCount": {
-          "type": "number",
-          "description": "Number of tomatoes missed by the detection model."
-        },
-        "wrongStage": {
-          "type": "string",
-          "description": "Indication of incorrect growth stage classification."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Additional notes from the farmer."
-        },
-        "boxLabels": {
-          "type": "array",
+          "description": "Array representing the harvest plan (date, harvest_kg).",
           "items": {
             "type": "string"
-          },
-          "description": "Box label array from the farmer."
+          }
         },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the image associated with the feedback."
+        "notes": {
+          "type": "array",
+          "description": "Notes or observations about the forecast.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
+        "id",
         "plantId",
-        "uid"
+        "detectionId",
+        "yieldNowKg",
+        "sellableKg",
+        "dailyForecast",
+        "harvestPlan",
+        "notes"
       ]
     },
-    "MarketPrice": {
-      "title": "MarketPrice",
+    "MarketData": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MarketData",
       "type": "object",
-      "description": "Represents market prices for tomatoes in a specific district and date.",
+      "description": "Represents the market data and price forecasts.",
       "properties": {
-        "district": {
+        "id": {
           "type": "string",
-          "description": "District for which the market price is recorded."
+          "description": "Unique identifier for the MarketData entity."
         },
-        "date": {
+        "forecastId": {
           "type": "string",
-          "description": "Date for which the market price is recorded.",
-          "format": "date-time"
+          "description": "Reference to Forecast. (Relationship: Forecast 1:1 MarketData)"
         },
-        "price": {
+        "forecast": {
+          "type": "array",
+          "description": "Array of forecasted market prices (date, price).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bestDate": {
+          "type": "string",
+          "description": "The date with the best forecasted price."
+        },
+        "bestPrice": {
           "type": "number",
-          "description": "Market price of tomatoes."
+          "description": "The best forecasted price."
+        },
+        "modelInfo": {
+          "type": "string",
+          "description": "Information about the market forecasting model used."
         }
       },
       "required": [
-        "district",
-        "date",
-        "price"
-      ]
-    },
-    "DailyMetrics": {
-      "title": "DailyMetrics",
-      "type": "object",
-      "description": "Represents daily key performance indicators (KPIs) for the tomato yield prediction system.",
-      "properties": {
-        "date": {
-          "type": "string",
-          "description": "Date for which the metrics are recorded.",
-          "format": "date-time"
-        },
-        "mAP50_95": {
-          "type": "number",
-          "description": "Mean average precision at IoU thresholds between 0.50 and 0.95."
-        },
-        "avgConf": {
-          "type": "number",
-          "description": "Average confidence score of the detection model."
-        },
-        "yieldMAE": {
-          "type": "number",
-          "description": "Mean absolute error in yield estimation."
-        },
-        "imagesProcessed": {
-          "type": "number",
-          "description": "Number of images processed by the system."
-        }
-      },
-      "required": [
-        "date",
-        "mAP50_95",
-        "avgConf",
-        "yieldMAE",
-        "imagesProcessed"
+        "id",
+        "forecastId",
+        "forecast",
+        "bestDate",
+        "bestPrice",
+        "modelInfo"
       ]
     }
   },
@@ -222,35 +193,112 @@
     ]
   },
   "firestore": {
-    "/users/{uid}": {
-      "schema": {
-        "$ref": "#/entities/User"
+    "structure": [
+      {
+        "path": "/users/{userId}/plants/{plantId}",
+        "definition": {
+          "entityName": "Plant",
+          "schema": {
+            "$ref": "#/backend/entities/Plant"
+          },
+          "description": "Stores plant data. Each plant is owned by a user. Includes 'userId' in the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the plant."
+            },
+            {
+              "name": "plantId",
+              "description": "The ID of the plant."
+            }
+          ]
+        }
       },
-      "description": "Stores user profiles and farm metadata. Each document is uniquely identified by the user's UID."
-    },
-    "/plants/{plantId}": {
-      "schema": {
-        "$ref": "#/entities/Plant"
+      {
+        "path": "/users/{userId}/plants/{plantId}/detections/{detectionId}",
+        "definition": {
+          "entityName": "Detection",
+          "schema": {
+            "$ref": "#/backend/entities/Detection"
+          },
+          "description": "Stores detection data for a specific plant. Each detection is owned by the plant's owner. Includes 'userId' and 'plantId' in the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the plant and the detection."
+            },
+            {
+              "name": "plantId",
+              "description": "The ID of the plant to which the detection belongs."
+            },
+            {
+              "name": "detectionId",
+              "description": "The ID of the detection."
+            }
+          ]
+        }
       },
-      "description": "Stores per-image inference data for each plant. Includes denormalized 'uid' field for authorization independence."
-    },
-    "/feedback/{feedbackId}": {
-      "schema": {
-        "$ref": "#/entities/Feedback"
+      {
+        "path": "/users/{userId}/plants/{plantId}/detections/{detectionId}/forecasts/{forecastId}",
+        "definition": {
+          "entityName": "Forecast",
+          "schema": {
+            "$ref": "#/backend/entities/Forecast"
+          },
+          "description": "Stores forecast data for a specific detection. Each forecast is owned by the detection's owner. Includes 'userId', 'plantId', and 'detectionId' in the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the plant, detection and the forecast."
+            },
+            {
+              "name": "plantId",
+              "description": "The ID of the plant to which the detection and forecast belong."
+            },
+            {
+              "name": "detectionId",
+              "description": "The ID of the detection to which forecast belongs."
+            },
+            {
+              "name": "forecastId",
+              "description": "The ID of the forecast."
+            }
+          ]
+        }
       },
-      "description": "Stores farmer feedback on plant data. Includes denormalized 'uid' field for authorization independence."
-    },
-    "/market/{district}/{date}": {
-      "schema": {
-        "$ref": "#/entities/MarketPrice"
-      },
-      "description": "Stores cached market prices for tomatoes by district and date."
-    },
-    "/metrics/{yyyymmdd}": {
-      "schema": {
-        "$ref": "#/entities/DailyMetrics"
-      },
-      "description": "Stores daily KPIs for the tomato yield prediction system. Data only written via Cloud Functions."
-    }
+      {
+        "path": "/users/{userId}/plants/{plantId}/detections/{detectionId}/forecasts/{forecastId}/marketData/{marketDataId}",
+        "definition": {
+          "entityName": "MarketData",
+          "schema": {
+            "$ref": "#/backend/entities/MarketData"
+          },
+          "description": "Stores market data for a specific forecast. Each market data entry is owned by the forecast's owner. Includes 'userId', 'plantId', 'detectionId', and 'forecastId' in the path for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the plant, detection, forecast, and the market data."
+            },
+            {
+              "name": "plantId",
+              "description": "The ID of the plant to which the detection, forecast and market data belong."
+            },
+            {
+              "name": "detectionId",
+              "description": "The ID of the detection to which forecast and market data belong."
+            },
+            {
+              "name": "forecastId",
+              "description": "The ID of the forecast to which the market data belongs."
+            },
+            {
+              "name": "marketDataId",
+              "description": "The ID of the market data."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to organize data related to plants, detections, forecasts, and market data. Each entity is stored in its own collection. Since all data is private and related to individual user activity, a top-level `/users/{userId}` collection is introduced to guarantee private data and simple rules.\n\n**Authorization Independence (CRITICAL):** This design achieves Authorization Independence by avoiding hierarchical authorization dependencies. All entities inherit the authorization context via path-based ownership (`/users/{userId}`), eliminating the need for `get()` calls in security rules. Since there are no collaborative access patterns, no denormalization is needed.\n\n**Structural Segregation (Homogeneous Security Posture):** Each collection stores only one type of entity, ensuring that all documents within a collection share the same security requirements. This simplifies security rules.\n\n**QAPs (Rules are not Filters):** This structure enables secure `list` operations by enforcing path-based ownership. Rules can easily check `request.auth.uid == userId` to ensure that users can only access data they own.\n\n**Data Clarity and Predictability:** The schema uses explicit state modeling and predictable schema, making the data structure clear and easy to understand. Naming conventions are also consistent."
   }
 }
